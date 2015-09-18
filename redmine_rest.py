@@ -1,5 +1,6 @@
 ﻿import json
 from restful_lib import Connection
+import re
 import settings
 
 class easyRedmineWrapper:
@@ -38,3 +39,12 @@ class easyRedmineWrapper:
     def add_update_on_commit(self, issue, repo_name, branch_name, commit_hash, commit_msg):
         notes = "Repo <b>%s</b> branch <b>%s</b> commit <b>%s</b>: %s" % (repo_name, branch_name, commit_hash, commit_msg)
         return self.request_put("/issues/"+str(issue)+".json",{'issue': {'notes': notes }})
+
+    def add_update_on_commit_from_line(self, line, repo_name, branch_name):
+        (commit_hash, commit_msg) =line.split(' ',1)
+        match = re.search("\#(\d+)", commit_msg)
+        if match:
+            issue = match.group(1)
+            resp =self.add_update_on_commit(issue,repo_name, branch_name, commit_hash, commit_msg)
+            status = resp[u'headers']['status']
+            print 'Issue ', issue, ', http status code: ', status
