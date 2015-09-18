@@ -48,27 +48,30 @@ statuses = dict()
 for row in cur:
   statuses[row[0]] = row[1]
 
+def test_issue_statuses(issues, allowed_statuses, issue_description):
+   flag = False
+   global statuses
+   for s in issues.iterkeys():
+      if s not in allowed_statuses:
+          print "ERROR: ",issue_description," {",', '.join(map(str,issues[s])),"} are not in allowed status: ",statuses[s].decode('utf8').encode('cp866')
+          flag = True
+   return flag
+
 issues = get_not_closed_issues_with_children(issues)
 
 # checking status for issues
 issues_in_status = get_issues_with_statuses(issues)
 
-errors = False
-for s in issues_in_status.iterkeys():
-   if s not in settings.non_blocking_statuses:
-       print "ERROR: issues {",', '.join(map(str,issues_in_status[s])),"} are not in allowed status: ",statuses[s].decode('utf8').encode('cp866')
-       errors = True
+errors = test_issue_statuses(issues_in_status, settings.non_blocking_statuses_for_issues, "issues")
 
 # checking if any blocking issues are not in non-blocking status
 query = "SELECT issue_from_id FROM issue_relations WHERE relation_type='blocks' AND issue_to_id IN ("+', '.join(map(str,issues))+")"
+
+# IMPORTANT: here we are only interested in EXTERNAL blockers (from other user stories)
 blockers = filter(lambda b: b not in issues, get_issues_by_query(query))
 
 blockers_in_status = get_issues_with_statuses(blockers)
-
-for s in blockers_in_status.iterkeys():
-   if s not in settings.non_blocking_statuses:
-       print "ERROR: blocking issues {",', '.join(map(str,blockers_in_status[s])),"} are not in allowed status: ",statuses[s].decode('utf8').encode('cp866')
-       errors = True
+errors = test_issue_statuses(blockers_in_status, settings.non_blocking_statuses_for_blockers, "blockers") or errors
 
 if errors:
    print "Deployment is forbidden: see above"
@@ -76,6 +79,12 @@ if errors:
 
 branches = get_branches_for_issues(issues)
 
+issues_with_branches = set()
+
 for branch in branches.iterkeys():
    print branch+ ": "+', '.join(map(str,branches[branch]))
+   issues_with_branches |= branches[branch]
 
+issues_without_branches = issues - issues_with_branches
+
+print "The following issues have no branches mentioned in Redmine updates: "+ ', '.join(map(str,issues_without_branches))

@@ -11,7 +11,6 @@ mysql_username = 'user'
 mysql_password = 'parole'
 mysql_dbname = 'redmine_db'
 
-# set of ids of "non-blocking" issue statuses
-non_blocking_statuses = {5,6,7,9,15,18}
-
-print "Settings imported"
+# sets of ids of "non-blocking" issue statuses
+non_blocking_statuses_for_issues = {5,6,7,9,15,18}
+non_blocking_statuses_for_blockers = {5,6,7,15,18}

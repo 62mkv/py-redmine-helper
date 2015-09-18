@@ -1,7 +1,6 @@
 ﻿import logging
 import MySQLdb
 from sshtunnel import SSHTunnelForwarder
-from easyRedmine import easyRedmineWrapper
 import settings
 
 logger = None
