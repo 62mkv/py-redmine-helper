@@ -34,3 +34,7 @@ class easyRedmineWrapper:
 
     def set_parent_issue(self, issues, parent_id):
         self.put_issues_with_payload(issues,{'parent_issue_id': parent_id})
+
+    def add_update_on_commit(self, issue, repo_name, branch_name, commit_hash, commit_msg):
+        notes = "Repo <b>%s</b> branch <b>%s</b> commit <b>%s</b>: %s" % (repo_name, branch_name, commit_hash, commit_msg)
+        return self.request_put("/issues/"+str(issue)+".json",{'issue': {'notes': notes }})
