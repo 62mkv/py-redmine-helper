@@ -5,7 +5,7 @@ import settings
 
 class easyRedmineWrapper:
 
-    def __init__(self, api_key):
+    def __init__(self, api_key = settings.redmine_api_key):
         self.api_key = api_key
         self.conn = Connection(settings.redmine_url)
     
@@ -30,15 +30,15 @@ class easyRedmineWrapper:
     def set_issues_status_and_assigned(self, issues, status_id, assigned_id):
         self.put_issues_with_payload(issues,{'status_id': status_id, 'assigned_to_id': assigned_id})
 
-    def add_issues_to_milestone_1(self, issues):
-        self.add_issues_to_milestone(issues, 61, "Milestone 1")
-
     def set_parent_issue(self, issues, parent_id):
         self.put_issues_with_payload(issues,{'parent_issue_id': parent_id})
 
+    def add_notes_on_issues(self, issues, notes):
+        self.put_issues_with_payload(issues,{'notes': notes})
+
     def add_update_on_commit(self, issue, repo_name, branch_name, commit_hash, commit_msg):
         notes = "Repo <b>%s</b> branch <b>%s</b> commit <b>%s</b>: %s" % (repo_name, branch_name, commit_hash, commit_msg)
-        return self.request_put("/issues/"+str(issue)+".json",{'issue': {'notes': notes }})
+        return self.add_notes_on_issues(set([issue]), notes)
 
     def add_update_on_commit_from_line(self, line, repo_name, branch_name):
         (commit_hash, commit_msg) =line.split(' ',1)
@@ -46,5 +46,6 @@ class easyRedmineWrapper:
         if match:
             issue = match.group(1)
             resp =self.add_update_on_commit(issue,repo_name, branch_name, commit_hash, commit_msg)
-            status = resp[u'headers']['status']
-            print 'Issue ', issue, ', http status code: ', status
+
+    def add_issues_to_milestone_1(self, issues):
+        self.add_issues_to_milestone(issues, 61, "Milestone 1")
