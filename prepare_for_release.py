@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/python
-from redmine_mysql import get_not_closed_issues_with_children, get_cursor_by_query, get_issues_by_query
+from redmine_mysql import get_not_closed_issues_with_children, get_cursor_by_query, get_items_by_query, get_projects_with_children
 import settings
 import re
 import sys
@@ -68,7 +68,7 @@ errors = test_issue_statuses(issues_in_status, settings.non_blocking_statuses_fo
 query = "SELECT issue_from_id FROM issue_relations WHERE relation_type='blocks' AND issue_to_id IN ("+', '.join(map(str,issues))+")"
 
 # IMPORTANT: here we are only interested in EXTERNAL blockers (from other user stories)
-blockers = filter(lambda b: b not in issues, get_issues_by_query(query))
+blockers = filter(lambda b: b not in issues, get_items_by_query(query))
 
 blockers_in_status = get_issues_with_statuses(blockers)
 errors = test_issue_statuses(blockers_in_status, settings.non_blocking_statuses_for_blockers, "blockers") or errors
@@ -87,4 +87,14 @@ for branch in branches.iterkeys():
 
 issues_without_branches = issues - issues_with_branches
 
-print "The following issues have no branches mentioned in Redmine updates: "+ ', '.join(map(str,issues_without_branches))
+development_projects = get_projects_with_children({75}) - {60}
+
+issues_without_branches_in_development_projects = get_items_by_query("SELECT id from issues WHERE id in ({issue_list}) AND project_id in ({project_list})".format(
+    issue_list = ', '.join(map(str,issues_without_branches)), project_list=', '.join(map(str,development_projects))))
+
+print "The following issues in development projects have no branches mentioned in Redmine updates: "+ ', '.join(map(str,issues_without_branches_in_development_projects))
+
+issues_without_branches_in_new_development = get_items_by_query("SELECT id from issues WHERE id in ({issue_list}) AND project_id in ({project_list})".format(
+    issue_list = ', '.join(map(str,issues_without_branches)), project_list=', '.join(map(str,{60}))))
+
+print "The following issues in new development have no branches mentioned in Redmine updates: "+ ', '.join(map(str,issues_without_branches_in_new_development))

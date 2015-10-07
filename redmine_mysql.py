@@ -33,25 +33,31 @@ def get_cursor_by_query(query):
     cur.execute(query)
     return cur
 
-def get_issues_by_query(query):
-    ''' query should return issue "id" as a first column '''
+def get_items_by_query(query):
+    ''' query should return item "id" as a first column '''
     result = set()
     cur = get_cursor_by_query(query)
     for row in cur.fetchall():
        result.add(row[0])
     return result
 
+def get_items_with_children(items, table, keyname, parent_key_name, where=""):
+    prev_items = set()
+    while (items-prev_items>set()):
+        item_list = ', '.join(map(str,items))
+        children = get_items_by_query("SELECT {key} FROM {table} where {parent_key_name} in (".format(key=keyname,table=table,parent_key_name=parent_key_name)+item_list+") "+ where)
+        prev_items = items.copy()
+        items|=children
+    return items
+
 def get_issues_with_children(issues, where=""):
-    prev_issues = set()
-    while (issues-prev_issues>set()):
-        issue_list = ', '.join(map(str,issues))
-        children = get_issues_by_query("SELECT id FROM issues where parent_id in ("+issue_list+") "+ where)
-        prev_issues = issues.copy()
-        issues|=children
-    return issues
-    
+    return get_items_with_children(issues, 'issues', 'id', 'parent_id', where)
+
 def get_not_closed_issues_with_children(issues):
     return get_issues_with_children(issues, " and status_id not in (5,7)")
+
+def get_projects_with_children(projects, where=""):
+    return get_items_with_children(projects, 'projects', 'id','parent_id', where)
 
 def get_spent_time_with_subtasks(issue, start_date, end_date):
     query = """
