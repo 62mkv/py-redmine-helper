@@ -1,5 +1,6 @@
 ﻿import logging
 import MySQLdb
+import MySQLdb.cursors
 from sshtunnel import SSHTunnelForwarder
 import settings
 
@@ -14,7 +15,7 @@ def get_mysql_connection():
          ssh_username=settings.ssh_username,
          remote_bind_address=('127.0.0.1', 3306))
 
-def get_cursor_by_query(query):
+def get_cursor_by_query(query, cursorclass = MySQLdb.cursors.Cursor):
     def init_connection():
         global con
         global server
@@ -26,7 +27,13 @@ def get_cursor_by_query(query):
            server.start()
            con = None
            logger.debug("Connect to db")
-           con = MySQLdb.connect(user=settings.mysql_username,passwd=settings.mysql_password,db=settings.mysql_dbname,host='127.0.0.1',port=server.local_bind_port)
+           con = MySQLdb.connect(
+               user=settings.mysql_username,
+               passwd=settings.mysql_password,
+               db=settings.mysql_dbname,
+               host='127.0.0.1',
+               port=server.local_bind_port,
+               cursorclass= cursorclass)
         return con
 
     cur =  init_connection().cursor()
@@ -81,3 +88,33 @@ def get_spent_time_with_subtasks(issue, start_date, end_date):
        total += hrs
 
     return total,spent_details
+
+def get_issues_with_statuses(issues):
+    if len(issues) == 0:
+        return dict()
+    query="SELECT id, status_id from issues where id in ("+", ".join(map(str, issues))+")"
+    cur = get_cursor_by_query(query)
+    issues_in_status = dict()
+    for row in cur.fetchall():
+       if row[1] in issues_in_status:
+          issues_in_status[row[1]].append(row[0])
+       else:
+          issues_in_status[row[1]] = [row[0]]
+    return issues_in_status
+
+def test_issue_statuses(issues, statuses, allowed_statuses, issue_description):
+   flag = False
+   for s in issues.iterkeys():
+      if s not in allowed_statuses:
+          print "ERROR: ",issue_description," {",', '.join(map(str,issues[s])),"} are not in allowed status: ",statuses[s].decode('utf8').encode('cp866')
+          flag = True
+   return flag
+
+def get_statuses():
+    query = "SELECT id, name FROM issue_statuses"
+    cur = get_cursor_by_query(query)
+
+    statuses = dict()
+    for row in cur:
+      statuses[row[0]] = row[1]
+    return statuses

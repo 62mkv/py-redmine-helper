@@ -11,6 +11,21 @@ mysql_username = 'user'
 mysql_password = 'parole'
 mysql_dbname = 'redmine_db'
 
-# sets of ids of "non-blocking" issue statuses
-non_blocking_statuses_for_issues = {5,6,7,9,15,18}
-non_blocking_statuses_for_blockers = {5,6,7,15,18}
+statuses = {
+ 'solved': 3,
+ 'closed': 5,
+ 'rejected': 6, 
+ 'production_accepted': 7,
+ 'sandbox_accepted': 9,
+ 'production_deployed': 15,
+ 'deployment_approved': 18
+}
+ 
+statuses_closed = { statuses['rejected'], statuses['closed'], statuses['production_accepted'] }
+statuses_deployed = { statuses['production_deployed'] }
+statuses_ready_for_deploy = {  statuses['sandbox_accepted'], statuses['deployment_approved'] } 
+
+non_blocking_statuses_for_blockers = statuses_closed | statuses_deployed
+non_blocking_statuses_for_issues =  non_blocking_statuses_for_blockers | statuses_ready_for_deploy
+
+allowed_statuses_for_testing = non_blocking_statuses_for_issues | {statuses['solved']}
