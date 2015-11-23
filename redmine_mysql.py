@@ -102,6 +102,17 @@ def get_issues_with_statuses(issues):
           issues_in_status[row[1]] = [row[0]]
     return issues_in_status
 
+def get_issues_with_projects_and_statuses(issues):
+    if len(issues) == 0:
+        return []
+    query="SELECT id, project_id, status_id from issues where id in ({0})".format(", ".join(map(str, issues)))
+    cur = get_cursor_by_query(query)
+    res = []
+    for row in cur.fetchall():
+       res.append((row[0],row[1],row[2]))
+
+    return res
+
 def test_issue_statuses(issues, statuses, allowed_statuses, issue_description):
    flag = False
    for s in issues.iterkeys():

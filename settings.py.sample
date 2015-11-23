@@ -29,3 +29,7 @@ non_blocking_statuses_for_blockers = statuses_closed | statuses_deployed
 non_blocking_statuses_for_issues =  non_blocking_statuses_for_blockers | statuses_ready_for_deploy
 
 allowed_statuses_for_testing = non_blocking_statuses_for_issues | {statuses['solved']}
+
+responsible_for_project = {
+  1: 2 # project id => user id
+}
