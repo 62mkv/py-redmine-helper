@@ -1,6 +1,6 @@
 ﻿import sys
 
-def get_issues_from_command_line():
+def get_issues_from_command_line_as_list():
     if len(sys.argv)<2:
        print "Usage: ",sys.argv[0]," <issue_id>[,<issue_id>]"
        sys.exit(2)
@@ -11,4 +11,8 @@ def get_issues_from_command_line():
        print "ERROR: argument #1 has to be comma-separated list of issue ids"
        sys.exit(1)
 
-    return set(issues)
+    return issues
+
+def get_issues_from_command_line():
+    return set(get_issues_from_command_line_as_list())
+

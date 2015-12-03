@@ -102,6 +102,14 @@ def get_issues_with_statuses(issues):
           issues_in_status[row[1]] = [row[0]]
     return issues_in_status
 
+def get_statuses_for_issues(issues):
+    issues_in_status = get_issues_with_statuses(issues)
+    statuses_for_issues = dict()
+    for status in issues_in_status.keys():
+        for issue in issues_in_status[status]:
+            statuses_for_issues[issue] = status
+    return statuses_for_issues
+  
 def get_issues_with_projects_and_statuses(issues):
     if len(issues) == 0:
         return []
@@ -127,5 +135,14 @@ def get_statuses():
 
     statuses = dict()
     for row in cur:
-      statuses[row[0]] = row[1]
+      statuses[row[0]] = row[1].decode('utf8').encode('cp866')
     return statuses
+
+def get_children_of_issue(issue):
+    return get_issues_with_children(set([issue])) - set([issue])
+
+def issue_has_children(issue):
+    cur = get_cursor_by_query("SELECT COUNT(*) FROM issues WHERE parent_id IN ({})".format(issue))
+    row = cur.fetchone()
+    return row[0]>0
+ 

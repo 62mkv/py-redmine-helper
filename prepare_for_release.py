@@ -73,7 +73,7 @@ issues_in_status = get_issues_with_statuses(issues)
 
 # check if some of the issues are already deployed
 for status in settings.statuses_deployed:
-    if issues_in_status[status] is not None:
+    if issues_in_status.get(status) is not None:
          print 'Already deployed: {}'.format(', '.join(map(str,issues_in_status[status])))
          issues -= set(issues_in_status[status])
          del issues_in_status[status]

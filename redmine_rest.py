@@ -13,6 +13,8 @@ class easyRedmineWrapper:
         return self.conn.request_put(path, args= [ ('key', self.api_key) ], body=json.dumps(payload), headers={'content-type':'application/json', 'accept':'application/json'})
 
     def put_issues_with_payload(self, issues, payload):
+        if not isinstance(issues, set):
+            issues = set([issues])
         for i in issues:
             resp = self.request_put("/issues/"+str(i)+".json", {'issue': payload})
             status = resp[u'headers']['status']
@@ -49,3 +51,5 @@ class easyRedmineWrapper:
 
     def add_issues_to_milestone_1(self, issues):
         self.add_issues_to_milestone(issues, 61, "Milestone 1")
+
+erw = easyRedmineWrapper()
