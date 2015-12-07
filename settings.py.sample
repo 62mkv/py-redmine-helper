@@ -33,3 +33,5 @@ allowed_statuses_for_testing = non_blocking_statuses_for_issues | {statuses['sol
 responsible_for_project = {
   1: 2 # project id => user id
 }
+
+repo_storage = u'C:\\path\\to\\repos'

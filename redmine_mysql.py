@@ -125,7 +125,7 @@ def test_issue_statuses(issues, statuses, allowed_statuses, issue_description):
    flag = False
    for s in issues.iterkeys():
       if s not in allowed_statuses:
-          print "ERROR: ",issue_description," {",', '.join(map(str,issues[s])),"} are not in allowed status: ",statuses[s].decode('utf8').encode('cp866')
+          print "ERROR: ",issue_description," {",', '.join(map(str,issues[s])),"} are not in allowed status: ",statuses[s]
           flag = True
    return flag
 

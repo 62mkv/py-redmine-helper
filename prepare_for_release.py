@@ -6,12 +6,10 @@ import re
 import sys
 from utils import get_issues_from_command_line
 
-repo_storage = u'C:\\Users\\Марчук\\Documents\\ClickPhone\\Исходники\\clickphone'
-
 def get_remote_branches_for_commit(repo,commit):
     remote_branches = []
     try:
-        contains = subprocess.check_output("git --git-dir={0} branch -a --contains {1}".format(repo_storage+'\\'+repo+'\\\.git',commit))
+        contains = subprocess.check_output("git --git-dir={0} branch -a --contains {1}".format(settings.repo_storage+'\\'+repo+'\\\.git',commit))
         for line in contains.split():
             mp = re.match('\s*remotes/origin/(\S+)',line)
             if mp is not None:
@@ -102,7 +100,7 @@ issues_with_branches = set()
 for branch in branches.keys():
    if branch != "MERGED":
        for issue in branches[branch]:
-           if issue in branches["MERGED"]:
+           if branches.get('MERGED') is not None and issue in branches["MERGED"]:
                branches["MERGED"].remove(issue)
 
 # printing all the branches and their issues to deploy:
