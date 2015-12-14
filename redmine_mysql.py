@@ -143,6 +143,9 @@ def get_statuses():
 def get_milestones():
     return get_table_as_dict('id', 'name', 'versions')
 
+def get_sprints():
+    return get_table_as_dict('id', 'name', 'easy_sprints')
+
 def get_children_of_issue(issue):
     return get_issues_with_children(set([issue])) - set([issue])
 
