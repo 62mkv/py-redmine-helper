@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import MySQLdb
 import MySQLdb.cursors
 from sshtunnel import SSHTunnelForwarder
@@ -129,14 +129,19 @@ def test_issue_statuses(issues, statuses, allowed_statuses, issue_description):
           flag = True
    return flag
 
-def get_statuses():
-    query = "SELECT id, name FROM issue_statuses"
+def get_table_as_dict(key, value, table):
+    query = "SELECT {}, {} FROM {}".format(key, value, table)
     cur = get_cursor_by_query(query)
+    d = dict()
+    for row in cur.fetchall():
+        d[row[0]] = row[1].decode('utf8').encode('cp866')
+    return d
 
-    statuses = dict()
-    for row in cur:
-      statuses[row[0]] = row[1].decode('utf8').encode('cp866')
-    return statuses
+def get_statuses():
+    return get_table_as_dict('id', 'name', 'issue_statuses')
+
+def get_milestones():
+    return get_table_as_dict('id', 'name', 'versions')
 
 def get_children_of_issue(issue):
     return get_issues_with_children(set([issue])) - set([issue])
@@ -145,4 +150,46 @@ def issue_has_children(issue):
     cur = get_cursor_by_query("SELECT COUNT(*) FROM issues WHERE parent_id IN ({})".format(issue))
     row = cur.fetchone()
     return row[0]>0
- 
+
+def filter_issues_by_projects(issues,projects):
+    return get_items_by_query("SELECT id from issues WHERE id in ({issue_list}) AND project_id in ({project_list})".format(
+        issue_list = ', '.join(map(str,issues)), project_list=', '.join(map(str,projects))))
+
+def get_issues_without_parent_on_milestone(milestone_id):
+    query="SELECT id FROM issues i WHERE i.parent_id is NULL and i.fixed_version_id in ({0})".format(milestone_id)
+    return get_items_by_query(query)
+
+def get_open_milestones_for_project(project_id):
+    milestones = dict()
+    query="SELECT id, name FROM versions v WHERE v.project_id={} and v.status='open'".format(project_id)
+    cur = get_cursor_by_query(query)
+    for row in cur.fetchall():
+        milestones[row[0]] = row[1]
+    return milestones
+
+def get_milestones_for_issues(issues):
+    query = "SELECT id, fixed_version_id FROM issues WHERE id in ({issue_list})".format(issue_list=', '.join(map(str,issues)))
+    cur = get_cursor_by_query(query)
+    dict_issue_milestone = dict()
+    for row in cur.fetchall():
+        dict_issue_milestone[row[0]] = row[1]
+    return dict_issue_milestone
+   
+def get_parents_for_issues(issues):
+    query = "SELECT id, parent_id FROM issues WHERE id in ({})".format(','.join(map(str,issues)))
+    cur = get_cursor_by_query(query)
+    parent_issue = dict()
+    for row in cur.fetchall():
+        parent_issue[row[0]] = row[1]
+    return parent_issue
+
+def get_roots_for_issues(issues):
+    parents = get_parents_for_issues(issues)
+    counter = 1
+    while counter>0:
+        counter = 0
+        for issue in parents.keys():
+            if parents.get(parents[issue]) is not None:
+                 parents[issue] = parents[parents[issue]]
+                 counter += 1
+    return parents

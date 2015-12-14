@@ -1,22 +1,13 @@
 ﻿#!/usr/bin/python
 from redmine_mysql import *
-import subprocess
+from redmine_git import list_branch_issues, get_remote_branches_for_commit
 import settings
 import re
 import sys
 from utils import get_issues_from_command_line
 
-def get_remote_branches_for_commit(repo,commit):
-    remote_branches = []
-    try:
-        contains = subprocess.check_output("git --git-dir={0} branch -a --contains {1}".format(settings.repo_storage+'\\'+repo+'\\\.git',commit))
-        for line in contains.split():
-            mp = re.match('\s*remotes/origin/(\S+)',line)
-            if mp is not None:
-                remote_branch = mp.group(1)
-                remote_branches += [remote_branch]
-    finally:
-        return remote_branches
+MERGED = ('', 'MERGED') # "constant" to use for "merged" pseudo-branch
+NOT_A_BRANCH = ('', 'NOT-A-BRANCH') # "constant" to use for "not-a-branch" pseudo-branch
 
 def get_branches_for_issues(issues):
 
@@ -29,7 +20,7 @@ def get_branches_for_issues(issues):
            branch_issues[key] = set([issue])
 
     def add_repo_branch(issue, repo, branch, commit):
-        key = '\\'.join((repo, branch))
+        key = (repo, branch)
         add_branch_to_issue(issue, key, commit)
 
     in_clause = ', '.join(map(str,issues))
@@ -46,7 +37,7 @@ def get_branches_for_issues(issues):
             if m is None:  
                 continue 
             else:
-                add_branch_to_issue(issue, "NOT-A-BRANCH")
+                add_branch_to_issue(issue, NOT_A_BRANCH)
         else:
             repo = m.group(1)
             branch = m.group(2)
@@ -55,7 +46,7 @@ def get_branches_for_issues(issues):
         if not "master" in rb:
             add_repo_branch(issue, repo, branch, commit)
         else:
-            add_branch_to_issue(issue, "MERGED")
+            add_branch_to_issue(issue, MERGED)
 
     return branch_issues
 
@@ -97,27 +88,32 @@ branches = get_branches_for_issues(issues)
 issues_with_branches = set()
 
 # removing any non-fully merged issue from "MERGED" 'branch':
-for branch in branches.keys():
-   if branch != "MERGED":
-       for issue in branches[branch]:
-           if branches.get('MERGED') is not None and issue in branches["MERGED"]:
-               branches["MERGED"].remove(issue)
+for (repo, branch) in branches.keys():
+   if branch != 'MERGED':
+       for issue in branches[(repo,branch)]:
+           if branches.get(MERGED) is not None and issue in branches[MERGED]:
+               branches[MERGED].remove(issue)
 
 # printing all the branches and their issues to deploy:
-for branch in sorted(branches.keys()):
-   print branch+ ": "+', '.join(map(str,branches[branch]))
-   issues_with_branches |= branches[branch]
+for (repo,branch) in sorted(branches.keys()):
+   print repo+"\\"+branch+ ": "+', '.join(map(str,branches[(repo,branch)]))
+   issues_with_branches |= branches[(repo,branch)]
+   if branch != "test":
+       non_deployed_issues_from_this_branch = filter(lambda b: b not in issues and b not in blockers, list_branch_issues(repo,branch))
+       if len(non_deployed_issues_from_this_branch)>0:
+           print "WARNING! Branch {0} includes non-deployed issues: {1}".format(repo+"\\"+branch,', '.join(map(str, non_deployed_issues_from_this_branch)))
 
 issues_without_branches = issues - issues_with_branches
 
 development_projects = get_projects_with_children({75}) - {60}
 
 if len(issues_without_branches) > 0:
-    issues_without_branches_in_development_projects = get_items_by_query("SELECT id from issues WHERE id in ({issue_list}) AND project_id in ({project_list})".format(
-        issue_list = ', '.join(map(str,issues_without_branches)), project_list=', '.join(map(str,development_projects))))
-    print "The following issues in development projects have no branches mentioned in Redmine updates: "+ ', '.join(map(str,issues_without_branches_in_development_projects))
+    issues_without_branches_in_development_projects = filter_issues_by_projects(issues_without_branches,development_projects)
+    if len(issues_without_branches_in_development_projects)>0:
+        print "The following issues in development projects have no branches mentioned in Redmine updates: " + \
+            ', '.join(map(str,issues_without_branches_in_development_projects))
    
-    issues_without_branches_in_new_development = get_items_by_query("SELECT id from issues WHERE id in ({issue_list}) AND project_id in ({project_list})".format(
-        issue_list = ', '.join(map(str,issues_without_branches)), project_list=', '.join(map(str,{60}))))
-
-    print "The following issues in new development have no branches mentioned in Redmine updates: "+ ', '.join(map(str,issues_without_branches_in_new_development))
+    issues_without_branches_in_new_development = filter_issues_by_projects(issues_without_branches,{60})
+    if len(issues_without_branches_in_new_development)>0:
+        print "The following issues in new development have no branches mentioned in Redmine updates: " + \
+            ', '.join(map(str,issues_without_branches_in_new_development))
