@@ -1,5 +1,6 @@
 ﻿from redmine_mysql import get_statuses_for_issues, get_children_of_issue, issue_has_children
 from redmine_rest import erw
+from utils import get_issues_from_command_line
 
 status_priority = {
  13: 0 # И Обсуждение = Обсуждение
@@ -12,7 +13,7 @@ status_priority = {
 }
 
 def adjust_status_from_children(issue, status):
-    current_status = status 
+    current_status = 5 #status 
     children = get_children_of_issue(issue)
     statuses = get_statuses_for_issues(children)
     for child in children:
@@ -27,8 +28,7 @@ def adjust_status_from_children(issue, status):
                 current_status = status
     return current_status 
  
-issues = [  ] # 33152
-issues = [20676,24570,24619,25307,25561,31609,33077,33152,33287,33339,33340,33553,33759,33905,33906,33907,33908,33910,33921,33924]
+issues = get_issues_from_command_line
 
 statuses_for_issues = get_statuses_for_issues(issues)
 

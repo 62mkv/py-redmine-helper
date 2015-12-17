@@ -4,7 +4,6 @@ import MySQLdb.cursors
 from sshtunnel import SSHTunnelForwarder
 import settings
 
-logger = None
 server = None
 con = None
 
@@ -19,14 +18,10 @@ def get_cursor_by_query(query, cursorclass = MySQLdb.cursors.Cursor):
     def init_connection():
         global con
         global server
-        global logger 
         if con is None:
-           logger = logging.getLogger('{}.mysqltest'.format(__name__))
-           logger.debug('Starting tunnel')
            server = get_mysql_connection()
            server.start()
            con = None
-           logger.debug("Connect to db")
            con = MySQLdb.connect(
                user=settings.mysql_username,
                passwd=settings.mysql_password,
