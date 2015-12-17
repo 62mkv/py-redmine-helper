@@ -7,10 +7,10 @@ def list_branch_issues(repo,branch):
     try:
         diff = subprocess.check_output("git --git-dir={0} log --oneline master..origin/{1}".format(settings.repo_storage+'\\'+repo+'\\\.git',branch),stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError, e:
-        if not e.returncode == 128:
-            print "Error in repo '{0}' when build diff of origin/{1} with master: {2}".format(repo,branch,e.output)
-        else: 
+        if e.returncode == 128:
             print "ERROR: Repo {}, unknown branch in origin: {}".format(repo,branch)
+        else: 
+            print "Error in repo '{0}' when build diff of origin/{1} with master: {2}".format(repo,branch,e.output)
         return issues
     for line in diff.split():
         mp = re.match('#(\d+)',line)
@@ -21,8 +21,15 @@ def list_branch_issues(repo,branch):
 
 def get_remote_branches_for_commit(repo,commit):
     remote_branches = []
-    contains = subprocess.check_output("git --git-dir={0} branch -a --contains {1}".format(settings.repo_storage+'\\'+repo+'\\\.git',commit))
-          
+    try:
+        contains = subprocess.check_output("git --git-dir={0} branch -a --contains {1}".format(settings.repo_storage+'\\'+repo+'\\\.git',commit))
+    except subprocess.CalledProcessError, e:
+        if e.returncode == 129: 
+            print "Unappropriate commit {} in repo {}".format(commit, repo)
+        else:
+            print "Error in repo '{}' when listing branches for commit {}: {}".format(repo, commit, e.output)
+        return remote_branches
+
     for line in contains.split():
         mp = re.match('\s*remotes/origin/(\S+)',line)
         if mp is not None:
