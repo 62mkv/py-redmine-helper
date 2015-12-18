@@ -34,4 +34,11 @@ def get_db():
          Field('estimated_hours','float'),
          Field('assigned_to_id','reference users')
         )
+    db.define_table('time_entries',
+         Field('user_id', 'reference users'),
+         Field('hours'),
+         Field('entity_type'),
+         Field('entity_id')
+        )
+
     return db
