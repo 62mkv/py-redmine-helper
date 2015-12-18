@@ -18,7 +18,20 @@ def dal_connect():
            port = server.local_bind_port
         )
 
-    print "Creating db"
     db = DAL(uri, migrate = False)
-    print "Created db"
+    return db
+
+
+def get_db():
+    db = dal_connect()
+    db.define_table('users',Field('firstname'),Field('lastname'))
+    db.define_table('statuses',Field('name'), rname='issue_statuses')
+    db.define_table('issues',
+         Field('subject'),
+         Field('parent_id'),
+         Field('fixed_version_id'),
+         Field('status_id', 'reference statuses'),
+         Field('estimated_hours','float'),
+         Field('assigned_to_id','reference users')
+        )
     return db
