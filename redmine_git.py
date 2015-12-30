@@ -2,15 +2,19 @@
 import settings
 import re
 
+def get_git_dir(repo):
+    return settings.repo_storage+'\\'+repo+'\\.git'
+
 def list_branch_issues(repo,branch):
     issues = []
     try:
-        diff = subprocess.check_output("git --git-dir={0} log --oneline master..origin/{1}".format(settings.repo_storage+'\\'+repo+'\\\.git',branch),stderr = subprocess.STDOUT)
+        diff = subprocess.check_output("git --git-dir={0} log --oneline origin/master..origin/{1}".format(get_git_dir(repo),branch),
+            stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError, e:
         if e.returncode == 128:
             print "ERROR: Repo {}, unknown branch in origin: {}".format(repo,branch)
         else: 
-            print "Error in repo '{0}' when build diff of origin/{1} with master: {2}".format(repo,branch,e.output)
+            print "Error in repo '{0}' when build diff of origin/{1} with origin/master: {2}".format(repo,branch,e.output)
         return issues
     for line in diff.split():
         mp = re.match('#(\d+)',line)
@@ -19,10 +23,13 @@ def list_branch_issues(repo,branch):
             issues += [issue]
     return set(issues)
 
-def get_remote_branches_for_commit(repo,commit):
+def list_remote_branches(repo, options=None):
     remote_branches = []
     try:
-        contains = subprocess.check_output("git --git-dir={0} branch -a --contains {1}".format(settings.repo_storage+'\\'+repo+'\\\.git',commit))
+        command = "git --git-dir={0} branch -r {1}".format(
+           get_git_dir(repo),
+           str(options) if options is not None else "")
+        contains = subprocess.check_output(command)
     except subprocess.CalledProcessError, e:
         if e.returncode == 129: 
             print "Unappropriate commit {} in repo {}".format(commit, repo)
@@ -31,9 +38,28 @@ def get_remote_branches_for_commit(repo,commit):
         return remote_branches
 
     for line in contains.split():
-        mp = re.match('\s*remotes/origin/(\S+)',line)
+        mp = re.match('\s*(?:remotes/)?origin/(\S+)',line)
         if mp is not None:
             remote_branch = mp.group(1)
-            remote_branches += [remote_branch]
+            if remote_branch != 'HEAD': remote_branches += [remote_branch] 
     return remote_branches
 
+def get_remote_branches_for_commit(repo, commit):
+    return list_remote_branches(repo,  "-r --contains {}".format(commit))
+
+def list_non_deployed_issues_from_branch(repo, branch):
+    issues = set()
+    command = "git --git-dir={0} log --oneline master..{1}".format(get_git_dir(repo), branch)
+    try:
+        contains = subprocess.check_output(command)
+    except subprocess.CalledProcessError, e:
+        print e.output
+        return issues
+
+    for line in contains.split():
+        mp = re.search('#([0-9]+)', line)
+        if mp is not None:
+           issue = long(mp.group(1))
+           issues.add(issue)
+
+    return issues

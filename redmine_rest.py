@@ -27,10 +27,10 @@ class easyRedmineWrapper:
         self.put_issues_with_payload(issues, {'notes': 'Issue added to sprint "'+sprint_name+'" from REST API', 'easy_sprint_id': sprint_id})
                                          
     def set_issues_status(self, issues, status_id):
-        self.put_issues_with_payload(issues,{'status_id': status_id})
+        self.put_issues_with_payload(issues, {'status_id': status_id})
 
     def set_issues_status_and_assigned(self, issues, status_id, assigned_id):
-        self.put_issues_with_payload(issues,{'status_id': status_id, 'assigned_to_id': assigned_id})
+        self.put_issues_with_payload(issues, {'status_id': status_id, 'assigned_to_id': assigned_id})
 
     def set_parent_issue(self, issues, parent_id):
         self.put_issues_with_payload(issues,{'parent_issue_id': parent_id})
@@ -51,5 +51,8 @@ class easyRedmineWrapper:
 
     def add_issues_to_milestone_1(self, issues):
         self.add_issues_to_milestone(issues, 61, "Milestone 1")
+
+    def close_issues(self, issues):
+        self.set_issues_status(issues, settings.statuses['closed'])
 
 erw = easyRedmineWrapper()

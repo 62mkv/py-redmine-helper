@@ -1,4 +1,5 @@
 ﻿import sys
+import os
 
 def get_issues_from_command_line_as_list():
     if len(sys.argv)<2:
@@ -16,3 +17,14 @@ def get_issues_from_command_line_as_list():
 def get_issues_from_command_line():
     return set(get_issues_from_command_line_as_list())
 
+def get_folders_in_path(path):
+    folders = []
+    names = os.listdir(path)
+    for folder in names: 
+       try:
+          os.listdir("{}\\{}".format(path, folder))
+          folders.append(folder)
+       except:
+          pass
+
+    return folders
