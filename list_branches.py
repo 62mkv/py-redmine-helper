@@ -7,7 +7,8 @@ repos = get_folders_in_path(settings.repo_storage)
 
 for repo in repos:
     print repo
-    branches = set(list_remote_branches(repo)) - {'master'}
+    branches = list(set(list_remote_branches(repo)) - {'master'})
+    branches.sort()
 
     for branch in branches:
         issues = list_non_deployed_issues_from_branch(repo, 'origin/'+branch)

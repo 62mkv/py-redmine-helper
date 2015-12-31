@@ -59,7 +59,7 @@ def list_non_deployed_issues_from_branch(repo, branch):
     for line in contains.split():
         mp = re.search('#([0-9]+)', line)
         if mp is not None:
-           issue = long(mp.group(1))
+           issue = int(mp.group(1))
            issues.add(issue)
 
     return issues

@@ -23,32 +23,33 @@ def get_branches_for_issues(issues):
         key = (repo, branch)
         add_branch_to_issue(issue, key, commit)
 
-    in_clause = ', '.join(map(str,issues))
-    query = "SELECT notes, journalized_id FROM journals WHERE journalized_id IN ("+in_clause+") and journalized_type='Issue' and user_id={0}". \
-        format(settings.git_robot_redmine_id)
+    if len(issues)>0:
+        in_clause = ', '.join(map(str,issues))
+        query = "SELECT notes, journalized_id FROM journals WHERE journalized_id IN ("+in_clause+") and journalized_type='Issue' and user_id={0}". \
+            format(settings.git_robot_redmine_id)
 
-    cur = get_cursor_by_query(query)
+        cur = get_cursor_by_query(query)
 
-    for row in cur.fetchall():
-        issue = row[1]
-        repo = branch = commit = None
-        m=re.search(r"Repo <b>(\S+)</b> branch <b>(\S+)</b> commit <b>(\S+)</b>",row[0])
-        if m is None:
-            m=re.search(r"NOCOMMITOK",row[0])
-            if m is None:  
-                continue 
+        for row in cur.fetchall():
+            issue = row[1]
+            repo = branch = commit = None
+            m=re.search(r"Repo <b>(\S+)</b> branch <b>(\S+)</b> commit <b>(\S+)</b>",row[0])
+            if m is None:
+                m=re.search(r"NOCOMMITOK",row[0])
+                if m is None:  
+                    continue 
+                else:
+                    add_branch_to_issue(issue, NOT_A_BRANCH)
+                    continue
             else:
-                add_branch_to_issue(issue, NOT_A_BRANCH)
-                continue
-        else:
-            repo = m.group(1)
-            branch = m.group(2)
-            commit = m.group(3)
-        rb = get_remote_branches_for_commit(repo, commit)
-        if not "master" in rb:
-            add_repo_branch(issue, repo, branch, commit)
-        else:
-            add_branch_to_issue(issue, MERGED)
+                repo = m.group(1)
+                branch = m.group(2)
+                commit = m.group(3)
+            rb = get_remote_branches_for_commit(repo, commit)
+            if not "master" in rb:
+                add_repo_branch(issue, repo, branch, commit)
+            else:
+                add_branch_to_issue(issue, MERGED)
 
     return branch_issues
 
@@ -77,14 +78,15 @@ if len(deployed)>0:
 # check if any of the issues are not in allowed status for deployment
 errors = test_issue_statuses(issues_in_status, statuses, settings.non_blocking_statuses_for_issues, "issues")
 
-# checking if any blocking issues are not in non-blocking status
-query = "SELECT issue_from_id FROM issue_relations WHERE relation_type='blocks' AND issue_to_id IN ("+', '.join(map(str,issues))+")"
+if len(issues)>0:
+    # checking if any blocking issues are not in non-blocking status
+    query = "SELECT issue_from_id FROM issue_relations WHERE relation_type='blocks' AND issue_to_id IN ("+', '.join(map(str,issues))+")"
 
-# IMPORTANT: here we are only interested in EXTERNAL blockers (from other user stories)
-blockers = filter(lambda b: b not in issues, get_items_by_query(query))
+    # IMPORTANT: here we are only interested in EXTERNAL blockers (from other user stories)
+    blockers = filter(lambda b: b not in issues, get_items_by_query(query))
 
-blockers_in_status = get_issues_with_statuses(blockers)
-errors = test_issue_statuses(blockers_in_status, statuses, settings.non_blocking_statuses_for_blockers, "blockers") or errors
+    blockers_in_status = get_issues_with_statuses(blockers)
+    errors = test_issue_statuses(blockers_in_status, statuses, settings.non_blocking_statuses_for_blockers, "blockers") or errors
 
 if errors:
    print "Deployment is forbidden: see above"
