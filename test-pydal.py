@@ -50,7 +50,7 @@ def get_hours_spent_on_issue_with_children(issue):
             hours += issue_hours
     return hours
 
-issue = 22099
+issue = 33558
 
 hours = []
 hours.append((issue, get_hours_spent_on_issue(issue)))

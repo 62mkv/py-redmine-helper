@@ -12,6 +12,9 @@ class easyRedmineWrapper:
     def request_put(self, path, payload):
         return self.conn.request_put(path, args= [ ('key', self.api_key) ], body=json.dumps(payload), headers={'content-type':'application/json', 'accept':'application/json'})
 
+    def request_post(self, path, payload):
+        return self.conn.request_post(path, args= [ ('key', self.api_key) ], body=json.dumps(payload), headers={'content-type':'application/json', 'accept':'application/json'})
+
     def put_issues_with_payload(self, issues, payload):
         if not isinstance(issues, set):
             issues = set([issues])
@@ -19,6 +22,11 @@ class easyRedmineWrapper:
             resp = self.request_put("/issues/"+str(i)+".json", {'issue': payload})
             status = resp[u'headers']['status']
             print 'Issue ', i, ', http status code: ', status
+
+    def post_time_entries_with_payload(self, payload):
+        resp = self.request_post("/time_entries.json", {'time_entry': payload})
+        status = resp[u'headers']['status']
+        print 'Issue ', payload['issue_id'], ', http status code: ', status
 
     def add_issues_to_milestone(self, issues, version_id, milestone_name):
         self.put_issues_with_payload(issues, {'notes': 'Issue added to milestone: '+milestone_name, 'fixed_version_id': version_id})
