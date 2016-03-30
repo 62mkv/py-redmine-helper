@@ -14,6 +14,7 @@ erw = easyRedmineWrapper()
 
 for (issue,project,status) in issue_collection:
    person = settings.responsible_for_project[project] if project in settings.responsible_for_project else settings.responsible_for_project['*']
+# TODO: add support for special value "author" (useful for backend tasks)
    print issue, project, status, person 
    if status in settings.statuses_ready_for_deploy:
        erw.set_issues_status_and_assigned(issue, settings.statuses['production_deployed'], person); 

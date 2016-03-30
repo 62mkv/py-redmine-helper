@@ -22,6 +22,8 @@ class easyRedmineWrapper:
             resp = self.request_put("/issues/"+str(i)+".json", {'issue': payload})
             status = resp[u'headers']['status']
             print 'Issue ', i, ', http status code: ', status
+            if int(status) != 200:
+                print resp
 
     def post_time_entries_with_payload(self, payload):
         resp = self.request_post("/time_entries.json", {'time_entry': payload})

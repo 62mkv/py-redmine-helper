@@ -23,7 +23,7 @@ def list_branch_issues(repo,branch):
             issues += [issue]
     return set(issues)
 
-def list_remote_branches(repo, options=None):
+def list_remote_branches(repo, options=None, commit=None):
     remote_branches = []
     try:
         command = "git --git-dir={0} branch -r {1}".format(
@@ -45,7 +45,7 @@ def list_remote_branches(repo, options=None):
     return remote_branches
 
 def get_remote_branches_for_commit(repo, commit):
-    return list_remote_branches(repo,  "-r --contains {}".format(commit))
+    return list_remote_branches(repo,  "-r --contains {}".format(commit),commit)
 
 def list_non_deployed_issues_from_branch(repo, branch):
     issues = set()
