@@ -14,7 +14,7 @@ def get_mysql_connection():
          ssh_username=settings.ssh_username,
          remote_bind_address=('127.0.0.1', 3306))
 
-def get_cursor_by_query(query, cursorclass = MySQLdb.cursors.Cursor):
+def get_cursor_by_query(query):
     def init_connection():
         global con
         global server
@@ -27,8 +27,8 @@ def get_cursor_by_query(query, cursorclass = MySQLdb.cursors.Cursor):
                passwd=settings.mysql_password,
                db=settings.mysql_dbname,
                host='127.0.0.1',
-               port=server.local_bind_port,
-               cursorclass= cursorclass)
+               port=server.local_bind_port
+           )
         return con
 
     cur =  init_connection().cursor()
@@ -61,16 +61,21 @@ def get_not_closed_issues_with_children(issues):
 def get_projects_with_children(projects, where=""):
     return get_items_with_children(projects, 'projects', 'id','parent_id', where)
 
-def get_spent_time_with_subtasks(issue, start_date, end_date):
+def get_spent_time_with_subtasks(issue, start_date, end_date, bugs_free = False):
     query = """
-    SELECT ROUND(SUM(hours),2), u.lastname, gu.group_id  FROM time_entries te
+    SELECT ROUND(SUM(hours),2), i.id FROM time_entries te
       JOIN users u ON te.user_id = u.id
       LEFT OUTER JOIN groups_users gu ON te.user_id = gu.user_id
-      WHERE te.entity_type='Issue'  AND te.spent_on BETWEEN '{start_date}' AND '{end_date}'
+      JOIN issues i ON te.entity_type='Issue' AND te.entity_id = i.id
+      WHERE {bug_condition} te.spent_on BETWEEN '{start_date}' AND '{end_date}'
          AND te.entity_id IN ({issue_list}) 
          AND gu.group_id IN (130,162)
-      GROUP BY u.lastname, gu.group_id
-    """.format(start_date=start_date, end_date=end_date,issue_list=", ".join(map(str,get_issues_with_children(set([issue])))))
+      GROUP BY i.id
+    """.format(
+        start_date=start_date,
+        end_date=end_date,
+        bug_condition = 'i.tracker_id <> 1 AND' if bugs_free else '',
+        issue_list=", ".join(map(str,get_issues_with_children(set([issue])))))
                                       
     cur = get_cursor_by_query(query)
 
@@ -78,8 +83,8 @@ def get_spent_time_with_subtasks(issue, start_date, end_date):
     spent_details = ''
     for row in cur.fetchall():
        hrs = float(row[0])
-       lastname = row[1]
-       spent_details += lastname.decode('utf8').encode('cp866') + ': '+str(hrs)+', '
+       issue_id = int(row[1])
+       spent_details += '{}: {}, '.format(issue_id,hrs)
        total += hrs
 
     return total,spent_details
@@ -124,13 +129,19 @@ def test_issue_statuses(issues, statuses, allowed_statuses, issue_description):
           flag = True
    return flag
 
-def get_table_as_dict(key, value, table):
-    query = "SELECT {}, {} FROM {}".format(key, value, table)
+def get_filtered_table_as_dict(key, value, table, where, encoding = 'utf8'):
+    query = "SELECT {0}, {1} FROM {2}".format(key, value, table)
+    if len(where)>0:
+        query += ' WHERE {0}'.format(where)
+
     cur = get_cursor_by_query(query)
     d = dict()
     for row in cur.fetchall():
-        d[row[0]] = row[1].decode('utf8').encode('cp866')
+        d[row[0]] = row[1].decode('utf8').encode(encoding) if encoding != 'utf8' else row[1]
     return d
+
+def get_table_as_dict(key, value, table):
+    return get_filtered_table_as_dict(key, value, table, '', 'cp866')
 
 def get_statuses():
     return get_table_as_dict('id', 'name', 'issue_statuses')
