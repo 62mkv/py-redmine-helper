@@ -57,3 +57,9 @@ docs/_build/
 target/
 settings.py
 tmp_*.py
+
+# IntelliJ IDEA (PyCharm) stuff
+.idea/
+
+# redmine instance-specific settings
+rminstance/

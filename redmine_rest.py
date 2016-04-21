@@ -1,12 +1,13 @@
 ﻿import json
 from restful_lib import Connection
 import re
-import settings
+from rminstance.easyredmine import settings as easysettings
+from rminstance.freematiq   import settings as freesettings
 
-class easyRedmineWrapper:
+class RedmineRESTAPIWrapper(object):
 
-    def __init__(self, api_key = settings.redmine_api_key):
-        self.api_key = api_key
+    def __init__(self, settings):
+        self.api_key = settings.redmine_api_key
         self.conn = Connection(settings.redmine_url)
     
     def request_put(self, path, payload):
@@ -15,20 +16,40 @@ class easyRedmineWrapper:
     def request_post(self, path, payload):
         return self.conn.request_post(path, args= [ ('key', self.api_key) ], body=json.dumps(payload), headers={'content-type':'application/json', 'accept':'application/json'})
 
-    def put_issues_with_payload(self, issues, payload):
-        if not isinstance(issues, set):
-            issues = set([issues])
-        for i in issues:
-            resp = self.request_put("/issues/"+str(i)+".json", {'issue': payload})
+    def request_get(self, path, payload):
+        return self.conn.request_get(path, args= [ ('key', self.api_key) ] + payload, headers={'content-type':'application/json', 'accept':'application/json'})
+
+    def put_items_with_payload(self, url, payload_name, items, payload):
+        if not isinstance(items, set):
+            items = set([items])
+        for i in items:
+            resp = self.request_put("/{}/".format(url)+str(i)+".json", { payload_name: payload})
             status = resp[u'headers']['status']
-            print 'Issue ', i, ', http status code: ', status
+            print 'Item {} '.format(url), i, ', http status code: ', status
             if int(status) != 200:
                 print resp
+
+    def put_issues_with_payload(self, issues, payload):
+        return self.put_items_with_payload("issues", "issue", issues, payload)
 
     def post_time_entries_with_payload(self, payload):
         resp = self.request_post("/time_entries.json", {'time_entry': payload})
         status = resp[u'headers']['status']
         print 'Issue ', payload['issue_id'], ', http status code: ', status
+
+    def get_time_entries(self, payload):
+	resp = self.request_get("/time_entries.json", payload)
+        status = resp[u'headers']['status']
+        return resp[u'body']
+
+    def get_projects(self, payload):
+	resp = self.request_get("/projects.json", payload)
+        status = resp[u'headers']['status']
+        print status
+        return resp[u'body']
+
+    def set_projects_parent(self, projects, parent_id):
+        return self.put_items_with_payload("projects", "project", projects, { 'parent_id': parent_id})
 
     def add_issues_to_milestone(self, issues, version_id, milestone_name):
         self.put_issues_with_payload(issues, {'notes': 'Issue added to milestone: '+milestone_name, 'fixed_version_id': version_id})
@@ -41,6 +62,9 @@ class easyRedmineWrapper:
 
     def set_issues_status_and_assigned(self, issues, status_id, assigned_id):
         self.put_issues_with_payload(issues, {'status_id': status_id, 'assigned_to_id': assigned_id})
+
+    def set_issues_assigned(self, issues, assigned_id):
+        self.put_issues_with_payload(issues, {'assigned_to_id': assigned_id})
 
     def set_parent_issue(self, issues, parent_id):
         self.put_issues_with_payload(issues,{'parent_issue_id': parent_id})
@@ -65,4 +89,6 @@ class easyRedmineWrapper:
     def close_issues(self, issues):
         self.set_issues_status(issues, settings.statuses['closed'])
 
-erw = easyRedmineWrapper()
+# erw
+erw = RedmineRESTAPIWrapper(easysettings)
+frw = RedmineRESTAPIWrapper(freesettings)
