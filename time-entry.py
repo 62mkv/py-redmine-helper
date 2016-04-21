@@ -1,6 +1,9 @@
 ﻿import json
 from datetime import date
 from redmine_instances import rminstances
+from collections import namedtuple
+
+TimeEntry = namedtuple('TimeEntry','rminstance,spent_on,hours,comment,created_on')
 
 def print_my_time_today():
     time_entries = list()
@@ -8,7 +11,7 @@ def print_my_time_today():
 
     def add_to_list(_time_entries, r):
         for te in _time_entries:
-            time_entries.append((r, te['spent_on'], te['hours'], te['comments'], te['created_on']))
+            time_entries.append(TimeEntry._make([r, te['spent_on'], te['hours'], te['comments'], te['created_on']]))
 
     def add_time_entries(rw, label, user_id, projects):
         for project in projects: 
@@ -16,15 +19,16 @@ def print_my_time_today():
             add_to_list(resp["time_entries"], label)
 
     for rminstance in rminstances:
-        add_time_entries(rminstance[0], rminstance[1], rminstance[2].my_user_id, rminstance[2].projects_with_time)
+        add_time_entries(rminstance.rest_wrapper, rminstance.label, rminstance.settings.my_user_id, rminstance.settings.projects_with_time)
 
     total = 0 
 
-    time_entries.sort(key=lambda x: x[4])
+    time_entries.sort(key=lambda x: x.created_on)
     for te in time_entries:
-        if str(te[1]) == str(today):
-            print te[0], te[1], te[2], te[3]#, te[4]
-            total += te[2]
+        if str(te.spent_on) == str(today):
+#            print te
+            print te.rminstance, te.spent_on, te.hours, te.comment#, te[4]
+            total += te.hours
 
     print total
 
