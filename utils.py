@@ -28,3 +28,7 @@ def get_folders_in_path(path):
           pass
 
     return folders
+
+def as_in(items):
+    return ', '.join(map(str,items))
+
