@@ -14,3 +14,7 @@ select_open_issues_on_current_milestone_not_on_any_sprint = """
     NOT EXISTS 
     (SELECT iesr.issue_id FROM issue_easy_sprint_relations iesr WHERE iesr.easy_sprint_id IS NOT NULL AND iesr.issue_id=i.id)
     """
+
+select_root_issues_on_milestone = """
+    SELECT id from issues WHERE fixed_version_id = {milestone_id} and parent_id is NULL
+    """

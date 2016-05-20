@@ -1,5 +1,5 @@
 ﻿from redmine_mysql import * 
-from redmine_rest import easyRedmineWrapper
+from redmine_rest import erw
 import settings
 from utils import get_issues_from_command_line
 
@@ -9,8 +9,6 @@ issues = get_not_closed_issues_with_children(issues)
 
 # returns list of tuples (issue, project, status)
 issue_collection = get_issues_with_projects_and_statuses(issues)
-
-erw = easyRedmineWrapper()
 
 for (issue,project,status) in issue_collection:
    person = settings.responsible_for_project[project] if project in settings.responsible_for_project else settings.responsible_for_project['*']

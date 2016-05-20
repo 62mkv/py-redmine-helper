@@ -30,21 +30,24 @@ class RedmineRESTAPIWrapper(object):
     def put_issues_with_payload(self, issues, payload):
         return self.put_items_with_payload("issues", "issue", issues, payload)
 
+    def put_versions_with_payload(self, versions, payload):
+        return self.put_items_with_payload("versions", "version", versions, payload)
+
     def post_time_entries_with_payload(self, payload):
         resp = self.request_post("/time_entries.json", {'time_entry': payload})
         status = resp[u'headers']['status']
         print 'Issue ', payload['issue_id'], ', http status code: ', status
 
-    def get_time_entries(self, payload):
-	resp = self.request_get("/time_entries.json", payload)
+    def get_items_as_json(self, endpoint, payload):
+	resp = self.request_get("/"+endpoint+".json", payload)
         status = resp[u'headers']['status']
         return resp[u'body']
 
+    def get_time_entries(self, payload):
+        return self.get_items_as_json('time_entries', payload)
+
     def get_projects(self, payload):
-	resp = self.request_get("/projects.json", payload)
-        status = resp[u'headers']['status']
-        print status
-        return resp[u'body']
+        return self.get_items_as_json('projects', payload)
 
     def set_projects_parent(self, projects, parent_id):
         return self.put_items_with_payload("projects", "project", projects, { 'parent_id': parent_id})
@@ -87,3 +90,19 @@ class RedmineRESTAPIWrapper(object):
     def close_issues(self, issues):
         self.set_issues_status(issues, settings.statuses['closed'])
 
+    def get_items_as_json_full(self, endpoint, params = None, process_cb = None):
+        (offset, limit, read, total) = (0, 25, 0, 65535)
+        if params is None: params = []
+        result = []
+        while read<total:
+            _params = params + [('limit', limit), ('offset', offset)]
+            resp = json.loads(self.get_items_as_json(endpoint, _params))
+#            add_to_list(resp["time_entries"], label)
+            result += resp[endpoint]
+            if process_cb is not None:
+                process_cb(resp[endpoint])
+
+            total = resp["total_count"]
+            read += limit if (limit+offset < total) else total - offset
+            offset += limit
+        return result

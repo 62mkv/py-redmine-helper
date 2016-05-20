@@ -1,5 +1,7 @@
-﻿import sys
+import sys
 import os
+from datetime import date, timedelta
+from prodcal import ProdCal
 
 def get_issues_from_command_line_as_list():
     if len(sys.argv)<2:
@@ -29,6 +31,20 @@ def get_folders_in_path(path):
 
     return folders
 
-def as_in(items):
-    return ', '.join(map(str,items))
+def join_with(items, separator):
+    return separator.join(map(str,items))
 
+def as_in(items):
+    return join_with(items, ', ')
+
+def get_last_working_day(before=1):
+    mycal = ProdCal()
+    _d = date.today()
+    count = 0
+    while count<before:
+        _d -= timedelta(days=1)
+        while (not mycal.is_work_day(_d)):
+            _d -= timedelta(days=1)
+        count+=1
+    return _d
+  

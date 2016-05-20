@@ -2,16 +2,16 @@ import logging
 import MySQLdb
 import MySQLdb.cursors
 from sshtunnel import SSHTunnelForwarder
-import settings
+from rminstance.easyredmine import dbsettings 
 
 server = None
 con = None
 
 def get_mysql_connection():
     return SSHTunnelForwarder(
-         (settings.ssh_host, settings.ssh_port),
-         ssh_password=settings.ssh_password,
-         ssh_username=settings.ssh_username,
+         (dbsettings.ssh_host, dbsettings.ssh_port),
+         ssh_password=dbsettings.ssh_password,
+         ssh_username=dbsettings.ssh_username,
          remote_bind_address=('127.0.0.1', 3306))
 
 def get_cursor_by_query(query):
@@ -23,9 +23,9 @@ def get_cursor_by_query(query):
            server.start()
            con = None
            con = MySQLdb.connect(
-               user=settings.mysql_username,
-               passwd=settings.mysql_password,
-               db=settings.mysql_dbname,
+               user=dbsettings.mysql_username,
+               passwd=dbsettings.mysql_password,
+               db=dbsettings.mysql_dbname,
                host='127.0.0.1',
                port=server.local_bind_port
            )
@@ -202,3 +202,4 @@ def get_roots_for_issues(issues):
                  parents[issue] = parents[parents[issue]]
                  counter += 1
     return parents
+
