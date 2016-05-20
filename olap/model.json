@@ -1,0 +1,159 @@
+{
+    "dimensions": [
+        {
+         "name":"issue",
+         "label":"Issue",
+         "levels": [
+                {
+                    "name":"Redmine",
+                    "description": "Redmine",
+                    "label":"Redmine",
+                    "attributes": ["redmine"]
+                },
+                {
+                    "name":"Project",
+                    "label":"Project",
+                    "attributes": [ "project" ]
+                },
+                {
+                    "name":"Issue",
+                    "label":"Issue",
+                    "attributes": ["issue"]
+                }
+            ]
+        },
+        {
+          "name": "activity", 
+          "label": "Activity",
+          "levels": [
+              { 
+               "name": "activity", 
+               "label": "Activity", 
+               "attributes": [ "activity" ]
+              }
+          ]
+        },
+        {
+          "name": "tracker", 
+          "label": "Tracker",
+          "levels": [
+                {
+                    "name":"Tracker",
+                    "label":"Tracker",
+                    "attributes": [ "tracker" ]
+                }
+          ]
+        },
+        {
+         "name":"user", 
+         "label":"User",
+         "levels": [ 
+               {
+                 "name":"User",
+                 "label":"User",
+                 "attributes": ["user"]
+               }
+            ]
+        },
+        {
+            "name": "date_base_full",
+            "label": "Date Base Full",
+            "role": "time",
+            "info": {
+                "cv-datefilter-hierarchy": "daily"
+            },
+           "levels": [
+                   {
+                       "name":"year",
+                       "label":"Year",
+                       "role": "year"
+                   },
+                   {
+                       "name":"quarter",
+                       "label":"Quarter"
+                   },
+                   {
+                       "name":"month",
+                       "label":"Month"
+                   },
+                   {
+                       "name":"week",
+                       "label":"Week",
+                       "role": "week"
+                   },
+                   {
+                       "name":"day",
+                       "label":"Day",
+                       "role": "day"
+                   }
+               ],
+            "hierarchies": [
+                {
+                    "name": "weekly",
+                    "label": "Weekly",
+                    "levels": [ "year", "month", "week"]
+                },
+                {
+                    "name": "daily",
+                    "label": "Daily",
+                    "levels": [ "month", "week", "day"]
+                }
+            ]
+        },
+        {
+            "name": "spent_on",
+            "label": "Spent On",
+            "template": "date_base_full"
+        }
+    ],
+    "cubes": [
+        {
+            "name": "timesheet",
+            "dimensions": ["issue", "tracker", "activity", "spent_on", "user"],
+            "measures": [
+                {"name":"hours", "label":"Hours"}
+            ],
+            "aggregates": [
+                    {
+                        "name": "hours_sum",
+                        "function": "sum",
+                        "measure": "hours"
+                    },
+                    {
+                        "name": "record_count",
+                        "function": "count"
+                    }
+                ],
+            "joins": [
+                  {
+                       "master": "timesheet.activity_id",
+                       "detail": "activities.id"
+                  },
+                  {
+                       "master": "timesheet.tracker_id",
+                       "detail": "trackers.id"
+                  },
+                  {
+                       "master": "timesheet.user_id",
+                       "detail": "users.id"
+                  }
+                ],
+            "mappings": {
+                         "issue.redmine": "redmine",
+                         "issue.project": "project_name",
+                         "issue.issue": "issue",
+                         "tracker": "trackers.name",
+                         "activity": "activities.name",
+                         "user": "users.name",
+                         "spent_on.year": { "column":"spent_on", "extract":"year"},
+                         "spent_on.month": { "column":"spent_on", "extract":"month"},
+                         "spent_on.week": { "column":"spent_on", "extract":"week"},
+                         "spent_on.day": { "column":"spent_on", "extract":"day"}
+                         },
+            "info": {
+                "min_date": "2016-04-01",
+                "max_date": "2016-05-31"
+            }
+        }
+    ]
+}
