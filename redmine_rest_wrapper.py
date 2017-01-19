@@ -39,7 +39,8 @@ class RedmineRESTAPIWrapper(object):
         print 'Issue ', payload['issue_id'], ', http status code: ', status
 
     def get_items_as_json(self, endpoint, payload):
-	resp = self.request_get("/"+endpoint+".json", payload)
+        url = "/"+endpoint+".json"
+	resp = self.request_get(url, payload)
         status = resp[u'headers']['status']
         return resp[u'body']
 
@@ -97,7 +98,6 @@ class RedmineRESTAPIWrapper(object):
         while read<total:
             _params = params + [('limit', limit), ('offset', offset)]
             resp = json.loads(self.get_items_as_json(endpoint, _params))
-#            add_to_list(resp["time_entries"], label)
             result += resp[endpoint]
             if process_cb is not None:
                 process_cb(resp[endpoint])
@@ -106,3 +106,14 @@ class RedmineRESTAPIWrapper(object):
             read += limit if (limit+offset < total) else total - offset
             offset += limit
         return result
+
+# this helper function expects something like { 15: "value15", 16: "value16" } as parameter
+def custom_fields_as_payload(cf_dict):
+    payload = []
+   
+    for k, v in cf_dict.iteritems():
+        _dict = dict()
+        _dict["id"] = k
+        _dict["value"] = v
+        payload += [_dict]
+    return { 'custom_fields': payload }
