@@ -38,12 +38,12 @@ def as_in(items):
     return join_with(items, ', ')
 
 def get_last_working_day(before=1):
-    mycal = ProdCal()
+    calendar = ProdCal()
     _d = date.today()
     count = 0
     while count<before:
         _d -= timedelta(days=1)
-        while (not mycal.is_work_day(_d)):
+        while not calendar.is_work_day(_d):
             _d -= timedelta(days=1)
         count+=1
     return _d
