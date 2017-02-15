@@ -56,7 +56,7 @@ docs/_build/
 # PyBuilder
 target/
 settings.py
-tmp_*.py
+tmp*.py
 
 # IntelliJ IDEA (PyCharm) stuff
 .idea/

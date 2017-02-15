@@ -30,11 +30,11 @@ def get_user_time_entries(user, date):
     time_entries = list()
 
     for rminstance in rminstances:
-        if rminstance.team.team.get(user) is not None:
+        if rminstance.team.all_people.get(user) is not None:
             projects = rminstance.settings.projects_with_time
             rw = rminstance.rest_wrapper
             label = rminstance.label
-            user_id = rminstance.team.team[user]
+            user_id = rminstance.team.all_people[user]
             for project in projects:
                 params = [('project_id', project), ('user_id', user_id), ('spent_on', date)]
                 for te in rw.get_items_as_json_full('time_entries', params):
@@ -43,7 +43,8 @@ def get_user_time_entries(user, date):
                          te['hours'], te['comments'], te['created_on']]))
 
         else:
-            print "User {} not found in instance {}".format(user, rminstance.label)
+            pass 
+            #print "User {} not found in instance {}".format(user, rminstance.label)
 
     return time_entries
 
@@ -105,17 +106,28 @@ def print_team_time_spent_on_period(_users, period):
     while date < period[1]:
         date_time_entries[date] = dict()
         for user in users:
-            date_time_entries[date][user] = reduce(lambda x,y: x+y, get_user_time_entries(user, date), 0)
+            date_time_entries[date][user] = reduce(lambda x,y: x+y.hours, get_user_time_entries(user, date), 0)
         date += timedelta(1)
 
-    print date_time_entries
+    userlist = list(users)
+    print "\t",
+    for user in userlist:
+        print "{}\t".format(user),
+
+    for date in sorted(date_time_entries.keys(),cmp=lambda x,y: cmp(x.toordinal(), y.toordinal())):
+        print "\n{}\t".format(date),
+        for user in userlist:
+            print "{}\t".format(date_time_entries[date][user]),
 
 
 def print_team_time_spent_before(teams, before=0):
-    return show_teams_time_entries(teams, utils.get_last_working_day(before))
+    date = utils.get_last_working_day(before)
+    print date
+    return show_teams_time_entries(teams, date)
 
 
 def print_my_time_spent_before(before=0):
     date = utils.get_last_working_day(before)
-    return  print_user_time_entries(get_user_time_entries(common.me, date), date)
+    print date
+    return print_user_time_entries(get_user_time_entries(common.me, date), date)
 
