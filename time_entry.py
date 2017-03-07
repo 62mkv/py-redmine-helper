@@ -120,14 +120,14 @@ def print_team_time_spent_on_period(_users, period):
             print "{}\t".format(date_time_entries[date][user]),
 
 
-def print_team_time_spent_before(teams, before=0):
-    date = utils.get_last_working_day(before)
+def print_team_time_spent_before(teams, before=0, only_workdays=True):
+    date = utils.get_last_day_before(before, only_workdays)
     print date
     return show_teams_time_entries(teams, date)
 
 
-def print_my_time_spent_before(before=0):
-    date = utils.get_last_working_day(before)
+def print_my_time_spent_before(before=0, only_workdays=True):
+    date = utils.get_last_day_before(before, only_workdays)
     print date
     return print_user_time_entries(get_user_time_entries(common.me, date), date)
 

@@ -37,14 +37,15 @@ def join_with(items, separator):
 def as_in(items):
     return join_with(items, ', ')
 
-def get_last_working_day(before=1):
+def get_last_day_before(before, only_work_days):
     calendar = ProdCal()
     _d = date.today()
     count = 0
     while count<before:
         _d -= timedelta(days=1)
-        while not calendar.is_work_day(_d):
-            _d -= timedelta(days=1)
+        if only_work_days:
+            while not calendar.is_work_day(_d):
+                _d -= timedelta(days=1)
         count+=1
     return _d
   
