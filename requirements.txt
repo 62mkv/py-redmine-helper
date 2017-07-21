@@ -1,1 +1,2 @@
 ﻿git+https://github.com/62mkv/prod-cal.git
+requests

@@ -13,8 +13,8 @@ def valid_date(string):
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--team", help='one or several (comma-separated) of keys of "teams" dict, declared in rminstance/common.py. When a valid team is specified, only data for this team is collected.')
-parser.add_argument("--from", dest='fromdate', help='specify start date of period', type=valid_date)
-parser.add_argument("--to", dest='todate', help='specify end date of period', type=valid_date)
+parser.add_argument("--from", dest='fromdate', help='specify start date of period in dd-mm-yyyy format', type=valid_date)
+parser.add_argument("--to", dest='todate', help='specify end date of period in dd-mm-yyyy format', type=valid_date)
 args=parser.parse_args()
 
 try:

@@ -4,8 +4,8 @@ import MySQLdb.cursors
 from sshtunnel import SSHTunnelForwarder
 from rminstance.easyredmine import dbsettings 
 
-server = None
-con = None
+_server = None
+_con = None
 
 def get_mysql_connection():
     return SSHTunnelForwarder(
@@ -16,18 +16,16 @@ def get_mysql_connection():
 
 def get_cursor_by_query(query):
     def init_connection():
-        global con
-        global server
-        if con is None:
-           server = get_mysql_connection()
-           server.start()
-           con = None
-           con = MySQLdb.connect(
+        if _con is None:
+           _server = get_mysql_connection()
+           _server.start()
+           _con = None
+           _con = MySQLdb.connect(
                user=dbsettings.mysql_username,
                passwd=dbsettings.mysql_password,
                db=dbsettings.mysql_dbname,
                host='127.0.0.1',
-               port=server.local_bind_port
+               port=_server.local_bind_port
            )
         return con
 
