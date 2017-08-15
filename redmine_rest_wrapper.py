@@ -38,6 +38,12 @@ class RedmineRESTAPIWrapper(object):
         status = resp[u'headers']['status']
         print 'Issue ', payload['issue_id'], ', http status code: ', status
 
+    def get_item_as_json(self, endpoint, item_id, payload):
+        url = "/%s/%d.json" % (endpoint, item_id)
+	resp = self.request_get(url, payload)
+        status = resp[u'headers']['status']
+        return resp[u'body']
+
     def get_items_as_json(self, endpoint, payload):
         url = "/"+endpoint+".json"
 	resp = self.request_get(url, payload)
@@ -49,6 +55,9 @@ class RedmineRESTAPIWrapper(object):
 
     def get_projects(self, payload):
         return self.get_items_as_json('projects', payload)
+
+    def get_issue_statuses(self, payload):
+        return self.get_items_as_json('issue_statuses', payload)
 
     def set_projects_parent(self, projects, parent_id):
         return self.put_items_with_payload("projects", "project", projects, { 'parent_id': parent_id})
