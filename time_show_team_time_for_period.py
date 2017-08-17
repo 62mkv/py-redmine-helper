@@ -1,14 +1,7 @@
 ﻿from time_entry import print_team_time_spent_on_period
 from datetime import date, datetime
 from rminstance.common import teams
-
-def valid_date(string):
-    try:
-        dt = datetime.strptime(string,"%d-%m-%Y")
-    except:
-        msg = "%r is not a valid date" % string
-        raise argparse.ArgumentTypeError(msg)
-    return date(dt.year,dt.month,dt.day)
+from utils import valid_date
 
 import argparse
 parser = argparse.ArgumentParser()

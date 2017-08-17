@@ -2,11 +2,27 @@
 from restful_lib import Connection
 import re
 
+# this helper function expects something like { 15: "value15", 16: "value16" } as parameter
+def custom_fields_as_payload(cf_dict):
+    payload = []
+   
+    for k, v in cf_dict.iteritems():
+        _dict = dict()
+        _dict["id"] = k
+        _dict["value"] = v
+        payload += [_dict]
+    return { 'custom_fields': payload }
+
 class RedmineRESTAPIWrapper(object):
 
     def __init__(self, settings):
         self.api_key = settings.redmine_api_key
         self.conn = Connection(settings.redmine_url)
+
+    def set_range(self, since_date, till_date):
+        ''' this is a stub, necessary for uniform processing of JIRA/Redmine wrappers'''
+
+        pass
     
     def request_put(self, path, payload):
         return self.conn.request_put(path, args= [ ('key', self.api_key) ], body=json.dumps(payload), headers={'content-type':'application/json', 'accept':'application/json'})
@@ -40,13 +56,13 @@ class RedmineRESTAPIWrapper(object):
 
     def get_item_as_json(self, endpoint, item_id, payload):
         url = "/%s/%d.json" % (endpoint, item_id)
-	resp = self.request_get(url, payload)
+        resp = self.request_get(url, payload)
         status = resp[u'headers']['status']
         return resp[u'body']
 
     def get_items_as_json(self, endpoint, payload):
         url = "/"+endpoint+".json"
-	resp = self.request_get(url, payload)
+        resp = self.request_get(url, payload)
         status = resp[u'headers']['status']
         return resp[u'body']
 
@@ -116,13 +132,12 @@ class RedmineRESTAPIWrapper(object):
             offset += limit
         return result
 
-# this helper function expects something like { 15: "value15", 16: "value16" } as parameter
-def custom_fields_as_payload(cf_dict):
-    payload = []
-   
-    for k, v in cf_dict.iteritems():
-        _dict = dict()
-        _dict["id"] = k
-        _dict["value"] = v
-        payload += [_dict]
-    return { 'custom_fields': payload }
+    def time_entries(self, user_id, projects, date):
+        result = []
+        for project in projects:
+            params = [('project_id', project), ('user_id', user_id), ('spent_on', date)]
+            for te in self.get_items_as_json_full('time_entries', params):
+                result.append(
+                    [te['project']['name'], te['issue']['id'] if te.get('issue') is not None else None, te['spent_on'],
+                        te['hours'], te['comments'], te['created_on']])
+        return result

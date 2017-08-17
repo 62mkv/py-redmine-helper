@@ -1,8 +1,8 @@
+from collections import namedtuple
+from datetime import timedelta
 import utils
 from rminstance import common
 from redmine_instances import rminstances
-from collections import namedtuple
-from datetime import timedelta
 
 TimeEntry = namedtuple('TimeEntry', 'rminstance,project,issue,spent_on,hours,comment,created_on')
 
@@ -18,11 +18,12 @@ def print_user_time_entries(time_entries, date):
     print total
 
 
-def get_user_time_entries(user, date):
+def get_user_time_entries(user, date, period = None):
     """
     This function gets time_entries for a given user on a given date from all configured RMs via REST API
     :param user: user-name, for which we collect the data, like 'ivanov'
     :param date: date, for which we collect the data, like '2016-02-22'
+    :param period: tuple of (date1, date2) (optional), might be used for JIRARESTAPIWrapper
     :type user: basestring
     :type date: datetime.date
     :return: list of named tuples of type 'TimeEntry'
@@ -31,17 +32,16 @@ def get_user_time_entries(user, date):
 
     for rminstance in rminstances:
         if rminstance.team.all_people.get(user) is not None:
-            projects = rminstance.settings.projects_with_time
             rw = rminstance.rest_wrapper
             label = rminstance.label
             user_id = rminstance.team.all_people[user]
-            for project in projects:
-                params = [('project_id', project), ('user_id', user_id), ('spent_on', date)]
-                for te in rw.get_items_as_json_full('time_entries', params):
-                    time_entries.append(TimeEntry._make(
-                        [label, te['project']['name'], te['issue']['id'] if te.get('issue') is not None else None, te['spent_on'],
-                         te['hours'], te['comments'], te['created_on']]))
-
+            projects = rminstance.settings.projects_with_time
+            if period is not None:
+                rw.set_range(period[0], period[1])
+            else:
+                rw.set_range(date, date)
+            for te in rw.time_entries(user_id, projects, date):
+                time_entries.append(TimeEntry._make([label]+te))
         else:
             pass 
             #print "User {} not found in instance {}".format(user, rminstance.label)
@@ -106,7 +106,7 @@ def print_team_time_spent_on_period(_users, period):
     while date < period[1]:
         date_time_entries[date] = dict()
         for user in users:
-            date_time_entries[date][user] = reduce(lambda x,y: x+y.hours, get_user_time_entries(user, date), 0)
+            date_time_entries[date][user] = reduce(lambda x,y: x+y.hours, get_user_time_entries(user, date, period), 0)
         date += timedelta(1)
 
     userlist = list(users)

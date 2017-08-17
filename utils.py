@@ -1,6 +1,7 @@
 import sys
+import argparse
 import os
-from datetime import date, timedelta, tzinfo
+from datetime import date, datetime, timedelta, tzinfo
 from prodcal import ProdCal
 
 class FixedOffset(tzinfo):
@@ -21,16 +22,24 @@ class FixedOffset(tzinfo):
     def __repr__(self):
         return 'FixedOffset(%d)' % (self.utcoffset().total_seconds() / 60)
 
+def valid_date(string):
+    try:
+        dt = datetime.strptime(string,"%d-%m-%Y")
+    except:
+        msg = "%r is not a valid date" % string
+        raise argparse.ArgumentTypeError(msg)
+    return date(dt.year,dt.month,dt.day)
+
 def get_issues_from_command_line_as_list():
     if len(sys.argv)<2:
-       print "Usage: ",sys.argv[0]," <issue_id>[,<issue_id>]"
-       sys.exit(2)
+        print "Usage: ",sys.argv[0]," <issue_id>[,<issue_id>]"
+        sys.exit(2)
 
     try:
-       issues = map(int,sys.argv[1].split(','))
+        issues = map(int,sys.argv[1].split(','))
     except:
-       print "ERROR: argument #1 has to be comma-separated list of issue ids"
-       sys.exit(1)
+        print "ERROR: argument #1 has to be comma-separated list of issue ids"
+        sys.exit(1)
 
     return issues
 
@@ -67,3 +76,7 @@ def get_last_day_before(before, only_work_days):
         count+=1
     return _d
   
+def date_range(start, end):
+    start =datetime.strptime(start, "%Y-%m-%d")
+    end =datetime.strptime(end, "%Y-%m-%d")
+    return [start + timedelta(days=x) for x in range(0, (end-start).days + 1)]
