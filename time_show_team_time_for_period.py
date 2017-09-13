@@ -1,6 +1,6 @@
 ﻿from time_entry import print_team_time_spent_on_period
-from datetime import date, datetime
-from rminstance.common import teams
+from datetime import date, datetime, timedelta
+from rminstance.common import teams, active_teams
 from utils import valid_date
 
 import argparse
@@ -14,9 +14,21 @@ try:
     arg_teams=args.team
     teamdict = {team:teams[team] for team in (set(teams.keys()) & set(arg_teams.split(',')))}
 except:
-    teamdict = teams
+    if active_teams is not None:
+        print "Summarize only active teams from rminstance/common.py:", active_teams
+        teamdict = { k: v for k, v in teams.items() if k in active_teams }
+    else:
+        teamdict = teams
 
 today = date.today()
-start_of_period = args.fromdate if args.fromdate else today.replace(day=1)
-end_of_period = args.todate if args.todate else today
+
+# on the first day of month, collect data for previous month
+if today.day == 1: 
+    end_of_period = args.todate if args.todate else today
+    today -= timedelta(days=1)
+    start_of_period = args.fromdate if args.fromdate else today.replace(day=1)
+else:
+    start_of_period = args.fromdate if args.fromdate else today.replace(day=1)
+    end_of_period = args.todate if args.todate else today
+
 print_team_time_spent_on_period(teamdict, (start_of_period, end_of_period))

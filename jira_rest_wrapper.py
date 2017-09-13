@@ -1,12 +1,13 @@
 ﻿import json
-import requests 
+import requests
 import re
 from datetime import datetime
-from rminstance.fantasy.settings import host, auth_params
 from utils import FixedOffset
 
 auth_endpoint='/rest/auth/1'
+# api_endpoint='/rest/api/2.0.alpha1' # - такой для JIRA 4.4
 api_endpoint='/rest/api/2'
+
 headers = {'user-agent': 'Python REST Client', 'content-type': 'application/json'}
 MAX_RESULTS = 10 # сколько issues вернет JQL-запрос за один раз
 
@@ -14,7 +15,7 @@ real_query = True # костыль чтобы тестировать парси�
 
 def parse_datetime(s):
     # 2017-08-15T05:08:00.000+0200
-    m = re.match("^(.+)([\+\-]\d+)$", s)
+    m = re.match(r"^(.+)([\+\-]\d+)$", s)
     naive_dt = datetime.strptime(m.group(1), '%Y-%m-%dT%H:%M:%S.%f')
     offset_str = m.group(2)
     offset = int(offset_str[-4:-2])*60 + int(offset_str[-2:])
@@ -40,8 +41,8 @@ class JIRARESTAPIWrapper(object):
             self.worklogs = None
 
     def auth(self):
-        payload = auth_params
-        r = requests.post(host+auth_endpoint+'/session', headers=headers, data=json.dumps(payload))
+        payload = self.auth_params
+        r = requests.post(self.host+auth_endpoint+'/session', headers=headers, data=json.dumps(payload))
         return r.json()['session']['value']
     
     def query_results(self, url, params):
@@ -52,11 +53,11 @@ class JIRARESTAPIWrapper(object):
 
     def get_issues(self, start_at, max_results):
         payload = {'jql': 'worklogDate >= {} AND worklogDate <= {}'.format(self.since_date, self.till_date), 'maxResults': max_results, 'fields': 'worklog,-description', 'expand': 'names', 'startAt': start_at}
-        return self.query_results(host+api_endpoint+'/search', payload)
+        return self.query_results(self.host+api_endpoint+'/search', payload)
 
     def get_worklogs(self, issue_id):
         payload = {'maxResults': MAX_RESULTS}
-        return self.query_results(host+api_endpoint+'/issue/{}/worklog'.format(issue_id), payload)
+        return self.query_results(self.host+api_endpoint+'/issue/{}/worklog'.format(issue_id), payload)
 
     def load_worklogs(self):
 
